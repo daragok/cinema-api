@@ -69,4 +69,5 @@ def run_method_catch_validation_error(method, request, *args, **kwargs):
     try:
         return method(request, *args, **kwargs)
     except ValidationError as e:
-        return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': e.args[0]})
+        obj, message = e.args
+        return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': message})

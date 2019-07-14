@@ -465,7 +465,7 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+        self.assertEqual(response.data['start_time'][0], 'Screenings should not intersect.')
 
     def test_create_intersecting_screenings_ends_within(self):
         self.client.force_login(self.admin)
@@ -480,7 +480,7 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+        self.assertEqual(response.data['start_time'][0], 'Screenings should not intersect.')
 
     def test_create_intersecting_screenings_start_before_ends_after(self):
         self.client.force_login(self.admin)
@@ -496,7 +496,7 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+        self.assertEqual(response.data['start_time'][0], 'Screenings should not intersect.')
 
     def test_create_screening_too_early_in_the_morning(self):
         self.client.force_login(self.admin)
@@ -510,7 +510,7 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'Screening cannot start before 8am.')
+        self.assertEqual(response.data['start_time'][0], 'Screening cannot start before 8am.')
 
     def test_create_screening_too_late_at_night(self):
         self.client.force_login(self.admin)
@@ -524,7 +524,7 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'Screening cannot start later than 11pm.')
+        self.assertEqual(response.data['start_time'][0], 'Screening cannot start later than 11pm.')
 
     def test_update_screening_admin(self):
         self.client.force_login(self.admin)
@@ -545,7 +545,7 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.put(self.detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+        self.assertEqual(response.data['start_time'][0], 'Screenings should not intersect.')
 
     def test_delete_screening_admin(self):
         self.client.force_login(self.admin)
