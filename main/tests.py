@@ -305,6 +305,15 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(response.data['title'], self.movie_hp.title)
         self.assertEqual(response.data['duration_minutes'], self.movie_hp.duration_minutes)
 
+    def test_update_movie_anon(self):
+        data = {'duration_minutes': 160}
+        response = self.client.patch(self.detail_url_hp_movie, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_delete_movie_anon(self):
+        response = self.client.delete(self.detail_url_hp_movie)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_create_movie_admin(self):
         self._log_in_admin(self.client)
         data = {'title': "The Lion King", "duration_minutes": 118}
@@ -372,8 +381,7 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
 
     def test_update_movie_user(self):
         self._log_in_user(self.client)
-        new_duration = 160
-        data = {'duration_minutes': new_duration}
+        data = {'duration_minutes': 160}
         response = self.client.patch(self.detail_url_hp_movie, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
