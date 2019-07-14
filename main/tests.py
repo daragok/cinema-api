@@ -423,6 +423,21 @@ class ScreeningTest(APITestCase):
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_create_screening_price_too_small(self):
+        self.client.force_login(self.admin)
+        datetime = timezone.datetime(2020, 1, 1, 12, 0, 0)
+        data = {
+            "room": 1,
+            "movie": 2,
+            "start_time": datetime,
+            "price": -1
+
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(response.data['price']), 1)
+        self.assertEqual(response.data['price'][0], 'Ensure this value is greater than or equal to 1.')
+
     def test_create_non_intersecting_screenings_admin(self):
         self.client.force_login(self.admin)
         movie_screening = Screening.objects.get(pk=2)
@@ -450,7 +465,6 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        print(response.data)
         self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
 
     def test_create_intersecting_screenings_ends_within(self):
@@ -482,7 +496,6 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        print(response.data)
         self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
 
     def test_create_screening_too_early_in_the_morning(self):

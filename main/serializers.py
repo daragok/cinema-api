@@ -63,6 +63,8 @@ class MovieSerializer(serializers.ModelSerializer):
 
 
 class ScreeningSerializer(serializers.ModelSerializer):
+    price = serializers.IntegerField(min_value=1)
+
     class Meta:
         model = Screening
         fields = ('id', 'room', 'movie', 'start_time', 'price')
