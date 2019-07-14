@@ -6,3 +6,8 @@ class TheaterRoom(models.Model):
     name = models.CharField(max_length=20)
     rows_count = models.IntegerField()
     seats_per_row_count = models.IntegerField()
+
+
+class Movie(models.Model):
+    title = models.CharField(max_length=20)
+    duration_minutes = models.IntegerField()
