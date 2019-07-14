@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from rest_framework import viewsets
-from rest_framework.response import Response
 
 from main import permissions as custom_permissions
 from main.serializers import UserSerializer

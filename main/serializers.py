@@ -19,10 +19,16 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'password')
 
     def create(self, validated_data):
-        user = User(
-            email=validated_data['email'],
-            username=validated_data['username']
-        )
+        user = super().create(validated_data)
+        # set password correctly to create hash
         user.set_password(validated_data['password'])
         user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        user = super().update(instance, validated_data)
+        if 'password' in validated_data:
+            # set password correctly to create hash
+            user.set_password(validated_data['password'])
+            user.save()
         return user

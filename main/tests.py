@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.generics import get_object_or_404
 from rest_framework.test import APITestCase
 
 
@@ -179,7 +180,7 @@ class AccountsTest(APITestCase):
         self.assertEqual(response.data['username'], new_username)
         self.assertEqual(response.data['email'], self.user_email)
 
-    def test_user_updates_himself(self):
+    def test_user_updates_self_username(self):
         self._log_in_user()
         new_username = 'new_username'
         data = {'username': new_username}
@@ -187,6 +188,18 @@ class AccountsTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], new_username)
         self.assertEqual(response.data['email'], self.user_email)
+
+    def test_user_updates_self_password(self):
+        self._log_in_user()
+        new_password = 'new_password'
+        data = {
+            'password': new_password,
+        }
+        response = self.client.patch(self.patch_user_detail_url, data)
+        user = get_object_or_404(User, pk=self.user.pk)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(user.check_password(new_password))
+        self.assertNotIn('password', response.data)
 
     def test_user_updates_another(self):
         self._log_in_user()
