@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -68,9 +68,21 @@ class ScreeningSerializer(serializers.ModelSerializer):
         fields = ('id', 'room', 'movie', 'start_time', 'price')
 
     def create(self, validated_data):
-        latest_allowed_start_time = timezone.datetime(2000, 1, 1, 23, 0, 0).time()
-        if validated_data['start_time'].time().hour < 8:
+        new_start = validated_data['start_time']
+        if new_start.time().hour < 8:
             raise ValidationError('Screening cannot start before 8am.')
-        if validated_data['start_time'].time() > latest_allowed_start_time:
+        latest_allowed_start_time = timezone.datetime(2000, 1, 1, 23, 0, 0).time()
+        if new_start.time() > latest_allowed_start_time:
             raise ValidationError('Screening cannot start later than 11pm.')
+        new_end = new_start + timedelta(minutes=validated_data['movie'].duration_minutes + Screening.IDLE_TIME)
+        screens_start_same_day = Screening.objects.filter(
+            room_id__exact=validated_data['room'].pk,
+            start_time__year=new_start.year, start_time__month=new_start.month,
+            start_time__day=new_start.day
+        )
+        for s in screens_start_same_day:
+            if new_start < s.start_time < new_end \
+                    or new_start < s.end_time < new_end \
+                    or s.start_time < new_start < s.end_time:
+                raise ValidationError("Screenings should not intersect.")
         return super().create(validated_data)

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 
 
@@ -26,3 +28,14 @@ class Screening(models.Model):
     movie = models.ForeignKey('Movie', on_delete=models.PROTECT)
     start_time = models.DateTimeField()
     price = models.IntegerField()
+
+    CLEANING_TIME_MIN = 15
+    ADS_TIME_MIN = 10
+    IDLE_TIME = ADS_TIME_MIN + CLEANING_TIME_MIN
+
+    @property
+    def end_time(self):
+        return self.start_time + timedelta(minutes=self.movie.duration_minutes + self.IDLE_TIME)
+
+    def __str__(self):
+        return "{} from {} till {} in {}".format(self.movie.title, self.start_time, self.end_time, self.room.name)

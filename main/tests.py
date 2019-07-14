@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
@@ -410,7 +412,7 @@ class ScreeningTest(APITestCase):
 
     def test_create_screening_admin(self):
         self.client.force_login(self.admin)
-        datetime = timezone.now()
+        datetime = timezone.datetime(2020, 1, 1, 12, 0, 0)
         data = {
             "room": 1,
             "movie": 2,
@@ -420,6 +422,68 @@ class ScreeningTest(APITestCase):
         }
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_non_intersecting_screenings_admin(self):
+        self.client.force_login(self.admin)
+        movie_screening = Screening.objects.get(pk=2)
+        # movie 2 has duration of 125 min + 10 min for ads + 15 min for cleaning = 150 min
+        next_movie_start_datetime = movie_screening.start_time + timedelta(minutes=151)
+        data = {
+            "room": movie_screening.room.pk,
+            "movie": movie_screening.movie.pk,
+            "start_time": next_movie_start_datetime,
+            "price": 200
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_intersecting_screenings_starts_within(self):
+        self.client.force_login(self.admin)
+        movie_screening = Screening.objects.get(pk=2)
+        # movie in screening with pk 2 has duration of 125 min + 10 min for ads + 15 min for cleaning = 150 min
+        next_movie_start_datetime = movie_screening.start_time + timedelta(minutes=149)
+        data = {
+            "room": movie_screening.room.pk,
+            "movie": movie_screening.movie.pk,
+            "start_time": next_movie_start_datetime,
+            "price": 200
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        print(response.data)
+        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+
+    def test_create_intersecting_screenings_ends_within(self):
+        self.client.force_login(self.admin)
+        movie_screening = Screening.objects.get(pk=2)
+        # movie in screening with pk 2 has duration of 125 min + 10 min for ads + 15 min for cleaning = 150 min
+        prev_movie_start_datetime = movie_screening.start_time - timedelta(minutes=149)
+        data = {
+            "room": movie_screening.room.pk,
+            "movie": movie_screening.movie.pk,
+            "start_time": prev_movie_start_datetime,
+            "price": 200
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+
+    def test_create_intersecting_screenings_start_before_ends_after(self):
+        self.client.force_login(self.admin)
+        movie_screening = Screening.objects.get(pk=2)
+        # movie in screening with pk 2 has duration of 125 min + 10 min for ads + 15 min for cleaning = 150 min
+        prev_movie_start_datetime = movie_screening.start_time - timedelta(minutes=149)
+        # movie starts before the new one. Movie with pk 1 has longer duration, so it ends after the new one
+        data = {
+            "room": movie_screening.room.pk,
+            "movie": 1,
+            "start_time": prev_movie_start_datetime,
+            "price": 200
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        print(response.data)
+        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
 
     def test_create_screening_too_early_in_the_morning(self):
         self.client.force_login(self.admin)
