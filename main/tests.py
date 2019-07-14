@@ -534,6 +534,19 @@ class ScreeningTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['price'], new_price)
 
+    def test_update_screening_admin_intersection(self):
+        self.client.force_login(self.admin)
+        existing_screening = Screening.objects.get(pk=2)
+        data = {
+            "room": existing_screening.room.pk,
+            "movie": existing_screening.movie.pk,
+            "start_time": existing_screening.start_time + timedelta(minutes=10),
+            "price": 200
+        }
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Screenings should not intersect.')
+
     def test_delete_screening_admin(self):
         self.client.force_login(self.admin)
         response = self.client.delete(self.detail_url)

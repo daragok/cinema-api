@@ -56,7 +56,17 @@ class ScreeningViewSet(viewsets.ModelViewSet):
     serializer_class = ScreeningSerializer
 
     def create(self, request, *args, **kwargs):
-        try:
-            return super().create(request, *args, **kwargs)
-        except ValidationError as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': e.args[0]})
+        return run_method_catch_validation_error(super().create, request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        return run_method_catch_validation_error(super().update, request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        return run_method_catch_validation_error(super().partial_update, request, *args, **kwargs)
+
+
+def run_method_catch_validation_error(method, request, *args, **kwargs):
+    try:
+        return method(request, *args, **kwargs)
+    except ValidationError as e:
+        return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': e.args[0]})

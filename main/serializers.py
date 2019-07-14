@@ -70,10 +70,19 @@ class ScreeningSerializer(serializers.ModelSerializer):
         fields = ('id', 'room', 'movie', 'start_time', 'price')
 
     def create(self, validated_data):
+        self._validate(validated_data)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if 'start_time' in validated_data:
+            self._validate(validated_data)
+        return super().update(instance, validated_data)
+
+    def _validate(self, validated_data):
         new_start = validated_data['start_time']
         if new_start.time().hour < 8:
             raise ValidationError('Screening cannot start before 8am.')
-        latest_allowed_start_time = timezone.datetime(2000, 1, 1, 23, 0, 0).time()
+        latest_allowed_start_time = timezone.datetime(1, 1, 1, 23, 0, 0).time()
         if new_start.time() > latest_allowed_start_time:
             raise ValidationError('Screening cannot start later than 11pm.')
         new_end = new_start + timedelta(minutes=validated_data['movie'].duration_minutes + Screening.IDLE_TIME)
@@ -87,4 +96,3 @@ class ScreeningSerializer(serializers.ModelSerializer):
                     or new_start < s.end_time < new_end \
                     or s.start_time < new_start < s.end_time:
                 raise ValidationError("Screenings should not intersect.")
-        return super().create(validated_data)
