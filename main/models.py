@@ -9,5 +9,6 @@ class TheaterRoom(models.Model):
 
 
 class Movie(models.Model):
-    title = models.CharField(max_length=100)
+    TITLE_MAX_LENGTH = 100
+    title = models.CharField(max_length=TITLE_MAX_LENGTH)
     duration_minutes = models.IntegerField()

@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from main.models import TheaterRoom
+from main.models import TheaterRoom, Movie
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,3 +40,12 @@ class TheaterRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = TheaterRoom
         fields = ('id', 'name', 'rows_count', 'seats_per_row_count')
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length=Movie.TITLE_MAX_LENGTH)
+    duration_minutes = serializers.IntegerField(min_value=10, max_value=500)
+
+    class Meta:
+        model = Movie
+        fields = ('id', 'title', 'duration_minutes')

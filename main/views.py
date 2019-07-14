@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 
 from main import permissions as custom_permissions
-from main.models import TheaterRoom
-from main.serializers import UserSerializer, TheaterRoomSerializer
+from main.models import TheaterRoom, Movie
+from main.serializers import UserSerializer, TheaterRoomSerializer, MovieSerializer
 
 
 class UserView(viewsets.ModelViewSet):
@@ -17,3 +17,9 @@ class UserView(viewsets.ModelViewSet):
 class TheaterRoomListView(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin):
     queryset = TheaterRoom.objects.all()
     serializer_class = TheaterRoomSerializer
+
+
+class MovieViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.DjangoModelPermissionsOrAnonReadOnly,)
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
