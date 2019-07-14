@@ -11,14 +11,21 @@ This is a cinema backend built with Django Rest Framework using JWT authenticati
 cd /project/folder/with/docker-compose.yml
 docker-compose build
 docker-compose up
-docker-compose run --rm web python ./manage.py migrate
-docker-compose run --rm web python ./manage.py createsuperuser
 ```
+Now the app is started.
 
+Apply migration to the database:
+```
+docker-compose run --rm web python ./manage.py migrate
+```
+Create admin user to be able to login as admin make API calls with more rights than a normal user: 
+```
+docker-compose run --rm web python ./manage.py createsuperuser
+``` 
 ## Running the tests
 Run command:
 ```bash
-docker-compose run --rm web bash python manage.py test main.tests
+docker-compose run --rm web python manage.py test main.tests
 ```
 You should be able to see passing unittest results
 ## Play around with API
@@ -27,6 +34,10 @@ When docker-compose up, navigate to
 http://127.0.0.1:8000/
 ```
 You should see available endpoints. Login using the right upper corner button.
+Create normal users with POST requests at
+```
+http://127.0.0.1:8000/api/accounts/
+```
 ## Implemented
 * CRUD for User
 * TheaterRooms are created with migration 
