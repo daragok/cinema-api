@@ -12,3 +12,10 @@ class Movie(models.Model):
     TITLE_MAX_LENGTH = 100
     title = models.CharField(max_length=TITLE_MAX_LENGTH)
     duration_minutes = models.IntegerField()
+
+
+class Screening(models.Model):
+    room = models.ForeignKey('TheaterRoom', on_delete=models.PROTECT)
+    movie = models.ForeignKey('Movie', on_delete=models.PROTECT)
+    start_time = models.DateTimeField()
+    price = models.IntegerField()
