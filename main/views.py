@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
@@ -53,3 +54,9 @@ class ScreeningViewSet(viewsets.ModelViewSet):
 
     queryset = Screening.objects.all()
     serializer_class = ScreeningSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except ValidationError as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': e.args[0]})

@@ -1,5 +1,9 @@
+from datetime import datetime
+
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -55,11 +59,18 @@ class MovieSerializer(serializers.ModelSerializer):
         screenings = Screening.objects.filter(movie=instance)
         if screenings:
             raise models.deletion.ProtectedError(instance, 'The movie cannot be updated while it is in screenings')
-        else:
-            return super().update(instance, validated_data)
+        return super().update(instance, validated_data)
 
 
 class ScreeningSerializer(serializers.ModelSerializer):
     class Meta:
         model = Screening
         fields = ('id', 'room', 'movie', 'start_time', 'price')
+
+    def create(self, validated_data):
+        latest_allowed_start_time = timezone.datetime(2000, 1, 1, 23, 0, 0).time()
+        if validated_data['start_time'].time().hour < 8:
+            raise ValidationError('Screening cannot start before 8am.')
+        if validated_data['start_time'].time() > latest_allowed_start_time:
+            raise ValidationError('Screening cannot start later than 11pm.')
+        return super().create(validated_data)
