@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path, include, re_path
+from rest_framework_simplejwt import views as jwt_views
 
 
 def redirect_to_api(request):
@@ -25,6 +26,8 @@ def redirect_to_api(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path('^$', redirect_to_api),
+    path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include('rest_framework.urls')),
     path('api/', include('main.urls')),
 ]
