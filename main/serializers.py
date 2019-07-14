@@ -1,8 +1,9 @@
 from django.contrib.auth.models import User
+from django.db import models
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from main.models import TheaterRoom, Movie
+from main.models import TheaterRoom, Movie, Screening
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -49,3 +50,10 @@ class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = ('id', 'title', 'duration_minutes')
+
+    def update(self, instance, validated_data):
+        screenings = Screening.objects.filter(movie=instance)
+        if screenings:
+            raise models.deletion.ProtectedError(instance, 'The movie cannot be updated while it is in screenings')
+        else:
+            return super().update(instance, validated_data)

@@ -1,12 +1,11 @@
-import unittest
-
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.test import APITestCase
 
-from main.models import Movie
+from main.models import Movie, Screening, TheaterRoom
 
 
 class HasAdmin:
@@ -358,18 +357,26 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(response.data['title'], self.movie_hp.title)
         self.assertEqual(response.data['duration_minutes'], new_duration)
 
-    @unittest.skip('requires Screening implementation')
     def test_update_movie_admin_with_screening(self):
-        pass
+        self._add_screening()
+        self._log_in_admin(self.client)
+        new_duration = 160
+        data = {'duration_minutes': new_duration}
+        response = self.client.patch(self.detail_url_hp_movie, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'The movie cannot be updated while it is in screenings')
 
     def test_delete_movie_admin_no_screening(self):
         self._log_in_admin(self.client)
         response = self.client.delete(self.detail_url_hp_movie)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    @unittest.skip('requires Screening implementation')
     def test_delete_movie_admin_with_screening(self):
-        pass
+        self._add_screening()
+        self._log_in_admin(self.client)
+        response = self.client.delete(self.detail_url_hp_movie)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'The movie cannot be deleted while it is in screenings')
 
     # restricted actions to normal user
     def test_create_movie_user(self):
@@ -391,3 +398,8 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         response = self.client.delete(self.detail_url_hp_movie)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
+    def _add_screening(self):
+        Screening.objects.create(
+            room=TheaterRoom.objects.all()[0], movie=self.movie_hp, start_time=timezone.now(), price=100
+        )
