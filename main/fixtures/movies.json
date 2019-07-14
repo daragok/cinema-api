@@ -1,0 +1,18 @@
+[
+  {
+    "model": "main.movie",
+    "pk": 1,
+    "fields": {
+      "title": "Harry Potter and the Philosopher's Stone",
+      "duration_minutes": 159
+    }
+  },
+  {
+    "model": "main.movie",
+    "pk": 2,
+    "fields": {
+      "title": "Episode IV: A New Hope",
+      "duration_minutes": 125
+    }
+  }
+]

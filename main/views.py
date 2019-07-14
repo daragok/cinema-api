@@ -4,8 +4,8 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 
 from main import permissions as custom_permissions
-from main.models import TheaterRoom, Movie
-from main.serializers import UserSerializer, TheaterRoomSerializer, MovieSerializer
+from main.models import TheaterRoom, Movie, Screening
+from main.serializers import UserSerializer, TheaterRoomSerializer, MovieSerializer, ScreeningSerializer
 
 
 class UserView(viewsets.ModelViewSet):
@@ -19,14 +19,6 @@ class UserView(viewsets.ModelViewSet):
 class TheaterRoomListView(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin):
     queryset = TheaterRoom.objects.all()
     serializer_class = TheaterRoomSerializer
-
-
-def call_method_catch_protected_error(method, request, *args, **kwargs):
-    try:
-        return method(request, *args, **kwargs)
-    except models.deletion.ProtectedError as e:
-        obj, message = e.args
-        return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': message})
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -46,3 +38,18 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         return call_method_catch_protected_error(super().partial_update, request, *args, **kwargs)
+
+
+def call_method_catch_protected_error(method, request, *args, **kwargs):
+    try:
+        return method(request, *args, **kwargs)
+    except models.deletion.ProtectedError as e:
+        obj, message = e.args
+        return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': message})
+
+
+class ScreeningViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.DjangoModelPermissionsOrAnonReadOnly,)
+
+    queryset = Screening.objects.all()
+    serializer_class = ScreeningSerializer

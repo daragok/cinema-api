@@ -6,4 +6,5 @@ router = DefaultRouter()
 router.register('accounts', views.UserView, basename='accounts')
 router.register('theater-rooms', views.TheaterRoomListView, basename='theater-room')
 router.register('movies', views.MovieViewSet, basename='movies')
+router.register('screenings', views.ScreeningViewSet, basename='screenings')
 urlpatterns = router.urls

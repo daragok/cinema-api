@@ -57,3 +57,9 @@ class MovieSerializer(serializers.ModelSerializer):
             raise models.deletion.ProtectedError(instance, 'The movie cannot be updated while it is in screenings')
         else:
             return super().update(instance, validated_data)
+
+
+class ScreeningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Screening
+        fields = ('id', 'room', 'movie', 'start_time', 'price')

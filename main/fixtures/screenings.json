@@ -1,0 +1,22 @@
+[
+  {
+    "model": "main.screening",
+    "pk": 1,
+    "fields": {
+      "room": 1,
+      "movie": 1,
+      "start_time": "2020-07-17T12:05:00Z",
+      "price": 100
+    }
+  },
+  {
+    "model": "main.screening",
+    "pk": 2,
+    "fields": {
+      "room": 1,
+      "movie": 2,
+      "start_time": "2020-07-17T17:05:00Z",
+      "price": 150
+    }
+  }
+]

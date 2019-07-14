@@ -7,36 +7,22 @@ from rest_framework.test import APITestCase
 
 from main.models import Movie, Screening, TheaterRoom
 
+USERNAME = 'user'
+USER_EMAIL = 'user@example.com'
 
-class HasAdmin:
-    def __init__(self):
-        self.admin_username = 'admin'
-        self.admin_email = 'admin@example.com'
-        self.admin_password = 'adminpassword'
-        self.admin = User.objects.create_superuser(self.admin_username, self.admin_email, self.admin_password)
-
-    def _log_in_admin(self, client):
-        client.login(username=self.admin_username, password=self.admin_password)
+ADMIN_USERNAME = 'admin'
 
 
-class HasUser:
-    def __init__(self):
-        self.username = 'user'
-        self.user_email = 'user@example.com'
-        self.user_password = 'userpassword'
-        self.user = User.objects.create_user(self.username, self.user_email, self.user_password)
+class AccountsTest(APITestCase):
+    fixtures = ['user.json', 'admin.json']
 
-    def _log_in_user(self, client):
-        client.login(username=self.username, password=self.user_password)
-
-
-class AccountsTest(APITestCase, HasUser, HasAdmin):
     def setUp(self):
-        HasUser.__init__(self)
-        HasAdmin.__init__(self)
         self.foobar_email = 'foobar@example.com'
         self.foobar_username = 'foobar'
         self.foobar_password = 'foobarfoobar'
+
+        self.admin = User.objects.get(username=ADMIN_USERNAME)
+        self.user = User.objects.get(username=USERNAME)
 
         self.get_list_url = reverse('accounts-list')
         self.get_admin_detail_url = reverse('accounts-detail', kwargs={'pk': self.admin.pk})
@@ -158,56 +144,56 @@ class AccountsTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(str(response.data['email'][0]), 'This field may not be blank.')
 
     def test_admin_gets_all_users_list(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         response = self.client.get(self.get_list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
 
     def test_admin_gets_user_detail(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         response = self.client.get(self.get_user_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['username'], self.username)
+        self.assertEqual(response.data['username'], USERNAME)
 
     def test_user_gets_user_detail(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         response = self.client.get(self.get_user_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['username'], self.username)
+        self.assertEqual(response.data['username'], USERNAME)
 
     def test_user_gets_admin_detail(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         response = self.client.get(self.get_admin_detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
 
     def test_user_gets_users_list(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         response = self.client.get(self.get_list_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(str(response.data['detail']), 'You do not have permission to perform this action.')
 
     def test_admin_updates_user(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         new_username = 'new_username'
         data = {'username': new_username}
         response = self.client.patch(self.patch_user_detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], new_username)
-        self.assertEqual(response.data['email'], self.user_email)
+        self.assertEqual(response.data['email'], USER_EMAIL)
 
     def test_user_updates_self_username(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         new_username = 'new_username'
         data = {'username': new_username}
         response = self.client.patch(self.patch_user_detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], new_username)
-        self.assertEqual(response.data['email'], self.user_email)
+        self.assertEqual(response.data['email'], USER_EMAIL)
 
     def test_user_updates_self_password(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         new_password = 'new_password'
         data = {
             'password': new_password,
@@ -219,7 +205,7 @@ class AccountsTest(APITestCase, HasUser, HasAdmin):
         self.assertNotIn('password', response.data)
 
     def test_user_updates_another(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         new_username = 'new_username'
         data = {'username': new_username}
         response = self.client.patch(self.patch_admin_detail_url, data)
@@ -228,7 +214,7 @@ class AccountsTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(str(response.data['detail']), 'You do not have permission to perform this action.')
 
     def test_user_creates_user(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         data = {
             'username': self.foobar_username,
             'email': self.foobar_email,
@@ -240,7 +226,7 @@ class AccountsTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(str(response.data['detail']), 'You do not have permission to perform this action.')
 
     def test_admin_creates_user(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         data = {
             'username': self.foobar_username,
             'email': self.foobar_email,
@@ -282,13 +268,15 @@ class TheaterRoomTest(APITestCase):
         self.assertEqual(str(response.data['detail']), 'Method "DELETE" not allowed.')
 
 
-class MovieTest(APITestCase, HasUser, HasAdmin):
-    def setUp(self):
-        HasUser.__init__(self)
-        HasAdmin.__init__(self)
+class MovieTest(APITestCase):
+    fixtures = ['user.json', 'admin.json', 'movies.json']
 
-        self.movie_hp = Movie.objects.create(title="Harry Potter and the Philosopher's Stone", duration_minutes=159)
-        self.movie_sw = Movie.objects.create(title="Episode IV: A New Hope", duration_minutes=125)
+    def setUp(self):
+        self.admin = User.objects.get(username=ADMIN_USERNAME)
+        self.user = User.objects.get(username=USERNAME)
+
+        self.movie_hp = Movie.objects.get(title="Harry Potter and the Philosopher's Stone")
+        self.movie_sw = Movie.objects.get(title="Episode IV: A New Hope")
 
         self.list_url = reverse('movies-list')
         self.detail_url_hp_movie = reverse('movies-detail', kwargs={'pk': self.movie_hp.pk})
@@ -314,14 +302,14 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_movie_admin(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         data = {'title': "The Lion King", "duration_minutes": 118}
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(response.data), 3)
 
     def test_create_movie_admin_duration_too_short(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         data = {'title': "The Lion King", "duration_minutes": -1}
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -330,7 +318,7 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(str(response.data['duration_minutes'][0]), 'Ensure this value is greater than or equal to 10.')
 
     def test_create_movie_admin_title_too_long(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         data = {'title': "T" * 101, "duration_minutes": 118}
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -339,7 +327,7 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(str(response.data['title'][0]), 'Ensure this field has no more than 100 characters.')
 
     def test_create_movie_admin_duration_too_long(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         data = {'title': "The Lion King", "duration_minutes": 501}
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -349,7 +337,7 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
                          'Ensure this value is less than or equal to 500.')
 
     def test_update_movie_admin_no_screening(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         new_duration = 160
         data = {'duration_minutes': new_duration}
         response = self.client.patch(self.detail_url_hp_movie, data)
@@ -359,7 +347,7 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
 
     def test_update_movie_admin_with_screening(self):
         self._add_screening()
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         new_duration = 160
         data = {'duration_minutes': new_duration}
         response = self.client.patch(self.detail_url_hp_movie, data)
@@ -367,34 +355,34 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         self.assertEqual(response.data['detail'], 'The movie cannot be updated while it is in screenings')
 
     def test_delete_movie_admin_no_screening(self):
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         response = self.client.delete(self.detail_url_hp_movie)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_movie_admin_with_screening(self):
         self._add_screening()
-        self._log_in_admin(self.client)
+        self.client.force_login(self.admin)
         response = self.client.delete(self.detail_url_hp_movie)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'The movie cannot be deleted while it is in screenings')
 
     # restricted actions to normal user
     def test_create_movie_user(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         data = {'title': "The Lion King", "duration_minutes": 118}
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
 
     def test_update_movie_user(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         data = {'duration_minutes': 160}
         response = self.client.patch(self.detail_url_hp_movie, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
 
     def test_delete_movie_user(self):
-        self._log_in_user(self.client)
+        self.client.force_login(self.user)
         response = self.client.delete(self.detail_url_hp_movie)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
@@ -403,3 +391,60 @@ class MovieTest(APITestCase, HasUser, HasAdmin):
         Screening.objects.create(
             room=TheaterRoom.objects.all()[0], movie=self.movie_hp, start_time=timezone.now(), price=100
         )
+
+
+class ScreeningTest(APITestCase):
+    fixtures = ['user.json', 'admin.json', 'movies.json', 'screenings.json']
+
+    def setUp(self):
+        self.admin = User.objects.get(username=ADMIN_USERNAME)
+        self.user = User.objects.get(username=USERNAME)
+
+        self.list_url = reverse('screenings-list')
+        self.detail_url = reverse('screenings-detail', kwargs={'pk': 1})
+
+    def test_list_screenings_anon(self):
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_create_screening_admin(self):
+        self.client.force_login(self.admin)
+        datetime = timezone.now()
+        data = {
+            "room": 1,
+            "movie": 2,
+            "start_time": datetime,
+            "price": 200
+
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_update_screening_admin(self):
+        self.client.force_login(self.admin)
+        new_price = 200
+        data = {"price": new_price}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['price'], new_price)
+
+    def test_delete_screening_admin(self):
+        self.client.force_login(self.admin)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_create_screening_user(self):
+        self.client.force_login(self.user)
+        response = self.client.post(self.list_url, data={})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_screening_user(self):
+        self.client.force_login(self.user)
+        response = self.client.patch(self.detail_url, data={})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_screening_user(self):
+        self.client.force_login(self.user)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
