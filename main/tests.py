@@ -238,3 +238,34 @@ class AccountsTest(APITestCase):
 
     def _log_in_user(self):
         self.client.login(username=self.username, password=self.user_password)
+
+
+class TheaterRoomTest(APITestCase):
+    def setUp(self):
+        self.list_url = reverse('theater-room-list')
+
+    def test_list_theater_rooms(self):
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_create_theater_room(self):
+        data = {}
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(str(response.data['detail']), 'Method "POST" not allowed.')
+
+    def test_update_theater_room(self):
+        data = {}
+        response = self.client.put(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(str(response.data['detail']), 'Method "PUT" not allowed.')
+
+    def test_delete_theater_room(self):
+        data = {}
+        response = self.client.delete(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(str(response.data['detail']), 'Method "DELETE" not allowed.')
