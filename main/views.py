@@ -35,18 +35,11 @@ class MovieViewSet(viewsets.ModelViewSet):
                             data={'detail': 'The movie cannot be deleted while it is in screenings'})
 
     def update(self, request, *args, **kwargs):
-        return call_method_catch_protected_error(super().update, request, *args, **kwargs)
+        return call_method_catch_exception(models.deletion.ProtectedError, super().update, request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        return call_method_catch_protected_error(super().partial_update, request, *args, **kwargs)
-
-
-def call_method_catch_protected_error(method, request, *args, **kwargs):
-    try:
-        return method(request, *args, **kwargs)
-    except models.deletion.ProtectedError as e:
-        obj, message = e.args
-        return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': message})
+        return call_method_catch_exception(models.deletion.ProtectedError, super().partial_update, request, *args,
+                                           **kwargs)
 
 
 class ScreeningViewSet(viewsets.ModelViewSet):
@@ -56,18 +49,18 @@ class ScreeningViewSet(viewsets.ModelViewSet):
     serializer_class = ScreeningSerializer
 
     def create(self, request, *args, **kwargs):
-        return run_method_catch_validation_error(super().create, request, *args, **kwargs)
+        return call_method_catch_exception(ValidationError, super().create, request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        return run_method_catch_validation_error(super().update, request, *args, **kwargs)
+        return call_method_catch_exception(ValidationError, super().update, request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        return run_method_catch_validation_error(super().partial_update, request, *args, **kwargs)
+        return call_method_catch_exception(ValidationError, super().partial_update, request, *args, **kwargs)
 
 
-def run_method_catch_validation_error(method, request, *args, **kwargs):
+def call_method_catch_exception(exception, method, request, *args, **kwargs):
     try:
         return method(request, *args, **kwargs)
-    except ValidationError as e:
+    except exception as e:
         obj, message = e.args
         return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': message})
