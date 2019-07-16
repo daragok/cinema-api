@@ -1,13 +1,14 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.db.models import Max
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.test import APITestCase
 
-from main.models import Movie, Screening, TheaterRoom
+from main.models import Movie, Screening, TheaterRoom, Seat
 
 USERNAME = 'user'
 USER_EMAIL = 'user@example.com'
@@ -566,3 +567,14 @@ class ScreeningTest(APITestCase):
         self.client.force_login(self.user)
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class SeatTest(APITestCase):
+    def test_seats_are_correct_count(self):
+        """ test makes sure the count of seats is correct for each Theater Room.
+        It should break when a new migration added for TheaterRoom creation or update"""
+        for room in TheaterRoom.objects.all():
+            room_seats = Seat.objects.filter(room=room)
+            self.assertEqual(room_seats.count(), room.rows_count * room.seats_per_row_count)
+            self.assertEqual(room_seats.aggregate(Max('row'))['row__max'], room.rows_count)
+            self.assertEqual(room_seats.aggregate(Max('number'))['number__max'], room.seats_per_row_count)

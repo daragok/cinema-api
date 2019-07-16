@@ -39,3 +39,9 @@ class Screening(models.Model):
 
     def __str__(self):
         return "{} from {} till {} in {}".format(self.movie.title, self.start_time, self.end_time, self.room.name)
+
+
+class Seat(models.Model):
+    room = models.ForeignKey('TheaterRoom', on_delete=models.CASCADE)
+    row = models.IntegerField()
+    number = models.IntegerField()
