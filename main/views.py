@@ -1,11 +1,11 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.response import Response
 
 from main import permissions as custom_permissions
-from main.models import TheaterRoom, Movie, Screening
+from main.models import TheaterRoom, Movie, Screening, Reservation, Seat
 from main.serializers import UserSerializer, TheaterRoomSerializer, MovieSerializer, ScreeningSerializer
 
 
@@ -64,3 +64,13 @@ def call_method_catch_exception(exception, method, request, *args, **kwargs):
     except exception as e:
         obj, message = e.args
         return Response(status=status.HTTP_400_BAD_REQUEST, data={'detail': message})
+
+
+class AvailableScreeningSeatsView(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, pk):
+        screening = Screening.objects.get(pk=pk)
+        reservations = Reservation.objects.filter(screening=screening)
+        unoccupied_seats = Seat.objects.filter(room=screening.room).exclude(id__in=(r.seat.pk for r in reservations))
+        return Response(s.pk for s in unoccupied_seats)

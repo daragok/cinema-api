@@ -63,10 +63,11 @@ class MovieSerializer(serializers.ModelSerializer):
 
 class ScreeningSerializer(serializers.ModelSerializer):
     price = serializers.IntegerField(min_value=1)
+    available_seats = serializers.HyperlinkedIdentityField(view_name='available-seats')
 
     class Meta:
         model = Screening
-        fields = ('id', 'room', 'movie', 'start_time', 'price')
+        fields = ('id', 'room', 'movie', 'start_time', 'price', 'available_seats')
 
     def validate(self, attrs):
         if 'start_time' in attrs:
