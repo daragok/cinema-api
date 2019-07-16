@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import models
 
 
@@ -45,3 +46,12 @@ class Seat(models.Model):
     room = models.ForeignKey('TheaterRoom', on_delete=models.CASCADE)
     row = models.IntegerField()
     number = models.IntegerField()
+
+
+class Reservation(models.Model):
+    screening = models.ForeignKey('Screening', on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    seat = models.ForeignKey('Seat', on_delete=models.PROTECT)
+    reservation_time = models.DateTimeField()
+    purchase_time = models.DateTimeField()
+    price_paid = models.IntegerField()
